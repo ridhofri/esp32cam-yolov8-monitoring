@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrewWatch — Staff Monitor</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #0d0d0d;
+        color: #e0e0e0;
+        min-height: 100vh;
+      }
+
+      /* ── HEADER ── */
+      header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-bottom: 1px solid #0f3460;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo-icon {
+        width: 36px;
+        height: 36px;
+        background: #e94560;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+
+      .logo h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #fff;
+      }
+      .logo span {
+        font-size: 0.75rem;
+        color: #888;
+      }
+
+      .status-dot {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #2ecc71;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      /* ── LAYOUT ── */
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 16px;
+        padding: 16px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      /* ── VIDEO ── */
+      .video-wrapper {
+        background: #111;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #222;
+        position: relative;
+      }
+
+      .video-wrapper img {
+        width: 100%;
+        display: block;
+        border-radius: 12px;
+      }
+
+      .video-label {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        color: #aaa;
+      }
+
+      /* ── SIDEBAR ── */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .card {
+        background: #141414;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .card h3 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #666;
+        margin-bottom: 14px;
+      }
+
+      /* ── STATS ── */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .stat-item {
+        background: #1a1a1a;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 0.7rem;
+        color: #666;
+        margin-top: 4px;
+      }
+
+      .stat-fps {
+        color: #2ecc71;
+      }
+      .stat-person {
+        color: #f39c12;
+      }
+      .stat-sit {
+        color: #e67e22;
+      }
+      .stat-alert {
+        color: #e74c3c;
+      }
+
+      /* ── PERSON LIST ── */
+      .person-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 260px;
+        overflow-y: auto;
+      }
+
+      .person-item {
+        background: #1a1a1a;
+        border-radius: 8px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-left: 3px solid #2ecc71;
+        transition: border-color 0.3s;
+      }
+
+      .person-item.sitting {
+        border-left-color: #e67e22;
+      }
+      .person-item.alerting {
+        border-left-color: #e74c3c;
+        animation: blink-border 0.8s infinite;
+      }
+
+      @keyframes blink-border {
+        0%,
+        100% {
+          border-left-color: #e74c3c;
+        }
+        50% {
+          border-left-color: #ff8a80;
+        }
+      }
+
+      .person-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      .person-status {
+        font-size: 0.75rem;
+        color: #888;
+        margin-top: 2px;
+      }
+
+      .badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+
+      .badge-stand {
+        background: #1e3d2a;
+        color: #2ecc71;
+      }
+      .badge-sit {
+        background: #3d2a1e;
+        color: #e67e22;
+      }
+      .badge-alert {
+        background: #3d1e1e;
+        color: #e74c3c;
+      }
+
+      /* ── TIMER BAR ── */
+      .timer-bar-bg {
+        background: #222;
+        border-radius: 4px;
+        height: 5px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+
+      .timer-bar {
+        height: 100%;
+        border-radius: 4px;
+        background: #e67e22;
+        transition: width 0.5s;
+      }
+
+      /* ── BUTTONS ── */
+      .btn {
+        width: 100%;
+        padding: 11px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        margin-bottom: 8px;
+      }
+
+      .btn:last-child {
+        margin-bottom: 0;
+      }
+      .btn:hover {
+        opacity: 0.85;
+      }
+
+      .btn-primary {
+        background: #0f3460;
+        color: #fff;
+      }
+      .btn-danger {
+        background: #e74c3c;
+        color: #fff;
+      }
+      .btn-success {
+        background: #27ae60;
+        color: #fff;
+      }
+
+      /* ── ALERT LOG ── */
+      .alert-log {
+        max-height: 160px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .alert-entry {
+        background: #1a1111;
+        border: 1px solid #3d1e1e;
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 0.75rem;
+        color: #e74c3c;
+      }
+
+      .alert-time {
+        color: #888;
+        font-size: 0.65rem;
+        margin-top: 2px;
+      }
+
+      /* ── INFO PILL ── */
+      .info-pill {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #888;
+        padding: 4px 0;
+        border-bottom: 1px solid #1a1a1a;
+      }
+
+      .info-pill:last-child {
+        border-bottom: none;
+      }
+      .info-pill span:last-child {
+        color: #ccc;
+      }
+
+      /* ── EMPTY STATE ── */
+      .empty-state {
+        text-align: center;
+        color: #444;
+        font-size: 0.8rem;
+        padding: 20px;
+      }
+
+      /* ── SCROLLBAR ── */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        <div class="logo-icon">☕</div>
+        <div>
+          <h1>BrewWatch</h1>
+          <span>Smart Staff Monitoring System</span>
+        </div>
+      </div>
+      <div class="status-dot">
+        <div class="dot" id="status-dot"></div>
+        <span id="status-text">Menghubungkan...</span>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- VIDEO FEED -->
+      <div class="video-wrapper">
+        <img src="/video_feed" alt="Live Feed" id="video-feed" />
+        <div class="video-label">📷 Live — Webcam</div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <!-- STATS -->
+        <div class="card">
+          <h3>📊 Statistik</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value stat-fps" id="stat-fps">0</div>
+              <div class="stat-label">FPS</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value stat-person" id="stat-person">0</div>
+              <div class="stat-label">Orang</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value stat-sit" id="stat-sit">0</div>
+              <div class="stat-label">Duduk</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value stat-alert" id="stat-alert">0</div>
+              <div class="stat-label">Total Alert</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PERSON LIST -->
+        <div class="card">
+          <h3>👤 Orang Terdeteksi</h3>
+          <div class="person-list" id="person-list">
+            <div class="empty-state">Belum ada orang terdeteksi</div>
+          </div>
+        </div>
+
+        <!-- KONTROL -->
+        <div class="card">
+          <h3>🎛️ Kontrol</h3>
+          <button class="btn btn-primary" onclick="takeSnapshot()">
+            📸 Ambil Snapshot
+          </button>
+          <button class="btn btn-success" onclick="sendTestAlert()">
+            🔔 Test Alert Telegram
+          </button>
+        </div>
+
+        <!-- INFO SISTEM -->
+        <div class="card">
+          <h3>⚙️ Konfigurasi</h3>
+          <div class="info-pill">
+            <span>Model</span>
+            <span>YOLOv8n-Pose</span>
+          </div>
+          <div class="info-pill">
+            <span>Threshold duduk</span>
+            <span id="cfg-threshold">{{ sitting_threshold }}s</span>
+          </div>
+          <div class="info-pill">
+            <span>Alert cooldown</span>
+            <span>{{ alert_cooldown }}s</span>
+          </div>
+          <div class="info-pill">
+            <span>Uptime</span>
+            <span id="cfg-uptime">0s</span>
+          </div>
+        </div>
+
+        <!-- ALERT LOG -->
+        <div class="card">
+          <h3>🚨 Log Alert</h3>
+          <div class="alert-log" id="alert-log">
+            <div class="empty-state">Belum ada alert</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+            const THRESHOLD = {{ sitting_threshold }};
+            let alertLog = [];
+
+            // ── STATUS POLLING ────────────────────────────────────────────
+            async function pollStatus() {
+              try {
+                const res  = await fetch("/api/status");
+                const data = await res.json();
+
+                // Stats
+                document.getElementById("stat-fps").textContent    = data.fps;
+                document.getElementById("stat-person").textContent = data.person_count;
+                document.getElementById("stat-alert").textContent  = data.total_alerts;
+                document.getElementById("cfg-uptime").textContent  = data.uptime + "s";
+
+                // Duduk count
+                const sittingN = data.sitting_info.filter(p => p.sitting).length;
+                document.getElementById("stat-sit").textContent = sittingN;
+
+                // Status dot
+                document.getElementById("status-dot").style.background = data.running ? "#2ecc71" : "#e74c3c";
+                document.getElementById("status-text").textContent      = data.running ? "Sistem Aktif" : "Sistem Berhenti";
+
+                // Person list
+                renderPersonList(data.sitting_info);
+
+                // Cek alert baru
+                if (data.alert_log && data.alert_log.length > 0) {
+                  alertLog = data.alert_log;
+                  renderAlertLog();
+                }
+
+              } catch(e) {
+                document.getElementById("status-dot").style.background = "#e74c3c";
+                document.getElementById("status-text").textContent      = "Koneksi terputus";
+              }
+            }
+
+            // ── RENDER PERSON LIST ────────────────────────────────────────
+            function renderPersonList(persons) {
+              const el = document.getElementById("person-list");
+              if (!persons || persons.length === 0) {
+                el.innerHTML = '<div class="empty-state">Belum ada orang terdeteksi</div>';
+                return;
+              }
+
+              el.innerHTML = persons.map(p => {
+                const alerting = p.alert;
+                const sitting  = p.sitting;
+                const pct      = Math.min((p.duration / THRESHOLD) * 100, 100);
+                const cls      = alerting ? "alerting" : (sitting ? "sitting" : "");
+                const badge    = alerting
+                  ? '<span class="badge badge-alert">⚠ ALERT</span>'
+                  : sitting
+                    ? '<span class="badge badge-sit">Duduk</span>'
+                    : '<span class="badge badge-stand">Berdiri</span>';
+
+                const timerBar = sitting
+                  ? `<div class="timer-bar-bg">
+                       <div class="timer-bar" style="width:${pct}%"></div>
+                     </div>`
+                  : "";
+
+                return `
+                  <div class="person-item ${cls}">
+                    <div style="flex:1">
+                      <div class="person-name">Orang #${p.id + 1}</div>
+                      <div class="person-status">${sitting ? `Duduk ${p.duration}s / ${THRESHOLD}s` : "Berdiri"}</div>
+                      ${timerBar}
+                    </div>
+                    ${badge}
+                  </div>`;
+              }).join("");
+            }
+
+            // ── ALERT LOG ────────────────────────────────────────────────
+            const alertedIds = new Set();
+
+            function addAlertLog(person) {
+              const key = `${person.id}_${Math.floor(Date.now()/30000)}`;
+              if (alertedIds.has(key)) return;
+              alertedIds.add(key);
+
+              const now = new Date().toLocaleTimeString("id-ID");
+              alertLog.unshift({ id: person.id + 1, duration: person.duration, time: now });
+              if (alertLog.length > 20) alertLog.pop();
+              renderAlertLog();
+            }
+
+      function renderAlertLog() {
+          const el = document.getElementById("alert-log");
+          if (alertLog.length === 0) {
+              el.innerHTML = '<div class="empty-state">Belum ada alert</div>';
+              return;
+          }
+          el.innerHTML = alertLog.map(a => `
+              <div class="alert-entry">
+                  ⚠ Orang #${a.id} duduk ${a.duration}s
+                  <div class="alert-time">${a.time || '-'}</div>
+              </div>`
+          ).join("");
+      }
+
+            // ── ACTIONS ──────────────────────────────────────────────────
+            async function takeSnapshot() {
+              try {
+                const res  = await fetch("/api/snapshot", { method: "POST" });
+                const data = await res.json();
+                if (data.success) {
+                  alert("✅ Snapshot tersimpan: " + data.path);
+                } else {
+                  alert("❌ Gagal: " + data.message);
+                }
+              } catch(e) {
+                alert("❌ Error: " + e);
+              }
+            }
+
+            async function sendTestAlert() {
+              try {
+                await fetch("/api/snapshot", { method: "POST" });
+                alert("✅ Test alert dikirim ke Telegram!");
+              } catch(e) {
+                alert("❌ Error: " + e);
+              }
+            }
+
+            // ── INIT ─────────────────────────────────────────────────────
+            setInterval(pollStatus, 1000);
+            pollStatus();
+    </script>
+  </body>
+</html>
